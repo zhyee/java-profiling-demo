@@ -12,11 +12,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.datadoghq:dd-trace-api:0.50.0'
 
-    runtime 'ch.qos.logback:logback-classic:1.2.11'
-}
-
-processResources {
-    from("../movies5000.json.gz")
+//    runtime 'ch.qos.logback:logback-classic:1.2.11'
 }
 
 application {
