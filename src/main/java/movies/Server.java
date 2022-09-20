@@ -5,6 +5,7 @@ import static spark.Spark.get;
 import static spark.Spark.port;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -43,13 +44,13 @@ public class Server {
 
 	@Trace(operationName = "http.req", resourceName = "/movies")
 	private static Object moviesEndpoint(Request req, Response res) {
-		var movies = getMovies().stream();
+		Stream<Server.Movie> movies = getMovies().stream();
 		movies = sortByDescReleaseDate(movies);
-		var query = req.queryParamOrDefault("q", req.queryParams("query"));
+		String query = req.queryParamOrDefault("q", req.queryParams("query"));
 		if (query != null) {
 			// Problem: We are not compiling the pattern and there's a more efficient way of ignoring cases.
 			// Solution:
-			//   var p = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
+			//   Pattern p = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
 			//   movies = movies.filter(m -> p.matcher(m.title).find());
 			movies = movies.filter(m -> Pattern.matches(".*" + query.toUpperCase() + ".*", m.title.toUpperCase()));
 		}
@@ -93,9 +94,9 @@ public class Server {
 		}
 
 		try (
-				var is = ClassLoader.getSystemResourceAsStream("movies5000.json.gz");
-				var gzis = new GZIPInputStream(is);
-				var reader = new InputStreamReader(gzis)
+				InputStream is = ClassLoader.getSystemResourceAsStream("movies5000.json.gz");
+				GZIPInputStream gzis = new GZIPInputStream(is);
+				InputStreamReader reader = new InputStreamReader(gzis)
 		){
 			return CACHED_MOVIES = GSON.fromJson(reader, new TypeToken<List<Movie>>() {}.getType());
 		} catch (IOException e) {
