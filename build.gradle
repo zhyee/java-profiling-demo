@@ -3,8 +3,12 @@ plugins {
     id 'application'
 }
 
-repositories {
-    jcenter()
+allprojects {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/public/' }
+        mavenLocal()
+        mavenCentral()
+    }
 }
 
 dependencies {
