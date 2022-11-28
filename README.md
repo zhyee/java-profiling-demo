@@ -70,12 +70,12 @@ sh-3.2# curl 'http://127.0.0.1:8080/movies?q=spider' | jq
 ]
 ```
 
-## Docker 环境运行
-
-> DK_DATAWAY可以从观测云空间 [集成 -> Datakit](https://console.guance.com/integration/datakit) 页面复制
+## Docker 下运行
 
 ```shell
-# 示例: docker build --build-arg DK_DATAWAY=https://openway.guance.com?token=tkn_f5b2989ba6ab44bc988cf7e2aa4a6de3 -t java-profiling-demo .
 $ docker build --build-arg DK_DATAWAY=<your-dataway-endpoint> -t java-profiling-demo .
 $ docker run -d java-profiling-demo
 ```
+
+> DK_DATAWAY可以从观测云空间 [集成 -> Datakit](https://console.guance.com/integration/datakit) 页面上复制，例如：
+> docker build --build-arg DK_DATAWAY=https://openway.guance.com?token=tkn_f5b2989ba6ab44bc988cf7e2aa4a6de3 -t java-profiling-demo .
