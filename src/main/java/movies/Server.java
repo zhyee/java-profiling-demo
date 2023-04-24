@@ -59,6 +59,7 @@ public class Server {
 
 	private static Stream<Movie> sortByDescReleaseDate(Stream<Movie> movies) {
 		return movies.sorted(Comparator.comparing((Movie m) -> {
+			System.out.println("fibonacci(23) = " + fibonacci(23));
 			// Problem: We are parsing a datetime for each item to be sorted.
 			// Example Solution:
 			//   Since date is in isoformat (yyyy-mm-dd) already, that one sorts nicely with normal string sorting
@@ -69,6 +70,13 @@ public class Server {
 				return LocalDate.MIN;
 			}
 		}).reversed());
+	}
+
+	private static int fibonacci(int n) {
+		if (n <= 2) {
+			return 1;
+		}
+		return fibonacci(n-1) + fibonacci(n-2);
 	}
 
 	private static Object replyJSON(Response res, Stream<?> data) {
