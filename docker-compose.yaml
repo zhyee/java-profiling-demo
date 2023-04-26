@@ -14,4 +14,4 @@ services:
       ENV_LOG: "${ENV_LOG}"
       ENV_GIN_LOG: "${ENV_GIN_LOG}"
       ENV_ENABLE_ELECTION: "enable"
-      ENV_HTTP_LISTEN: "${ENV_HTTP_LISTEN}"
+      ENV_HTTP_LISTEN: "0.0.0.0:9529"

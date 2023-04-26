@@ -74,23 +74,24 @@ sh-3.2# curl 'http://127.0.0.1:8080/movies?q=spider' | jq
 
 ## Docker 下运行
 
-- 如果没有安装 `docker-compose`，请先按照 [docker-compose install](https://docs.docker.com/compose/install/) 安装。
+- 如果没有安装 `docker-compose`，请先参照 [install docker-compose](https://docs.docker.com/compose/install/) 或自行搜索教程进行安装。
 
-- 运行docker容器
+- 启动服务并访问
 
 ```shell
+$ git clone https://github.com/GuanceCloud/java-profiling-demo.git
 $ cd java-profiling-demo
 $ DK_DATAWAY=<your-dataway-url> docker-compose up -d
 $ curl 'http://127.0.0.1:8080/movies?q=spider'
 ```
 
-- 停止docker容器
+- 停止服务
 
 ```shell
-docker-compose down
+$ docker-compose down
 ```
 
 > `DK_DATAWAY` 可以从观测云空间 [集成 -> Datakit](https://console.guance.com/integration/datakit) 页面上复制，一般为：
 > `https://openway.guance.com?token=tkn_xxxxxxxxxxxxxxxxxx` 格式。
 
-> 除了上述在启动命令中直接设置 `DK_DATAWAY`环境变量外， 还可以通过修改项目根目录下的 `.env` 文件来设置更多的环境变量。
+> 除了上述在启动命令中直接设置 `DK_DATAWAY`环境变量外， 还可以通过修改项目根目录下的 `.env` 文件来设置更多其他的环境变量。
