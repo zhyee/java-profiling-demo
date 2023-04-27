@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movies-java
+  labels:
+    app: movies-java
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: movies-java
+  template:
+    metadata:
+      name: movies-java
+      labels:
+        app: movies-java
+    spec:
+      shareProcessNamespace: true
+      containers:
+        - name: movies-java
+          image: zhangyicloud/movies:0.3.0-java
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: /app/datakit-profiler
+              name: profile-volume
+        - name: datakit-profiler
+          image: zhangyicloud/async-profiler:0.3.0
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - mountPath: /app/datakit-profiler
+              name: profile-volume
+          workingDir: /app/datakit-profiler
+          command: [ "sh", "-c", "mv -f /app/async-profiler/* /app/datakit-profiler/;sleep infinity" ]
+          securityContext:
+            capabilities:
+              add:
+                - SYS_PTRACE
+      restartPolicy: Always
+      volumes:
+        - name: profile-volume
+          emptyDir: {}
