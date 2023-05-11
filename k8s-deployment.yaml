@@ -29,7 +29,28 @@ spec:
           volumeMounts:
             - mountPath: /app/datakit-profiler
               name: profile-volume
+            - mountPath: /tmp
+              name: tmp
+          env:
+            - name: JAVA_OPTS
+              value: ""
 
+        - name: datakit
+          image: pubrepo.jiagouyun.com/datakit/datakit:1.6.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ENV_DATAWAY
+              value: "http://testing-openway.cloudcare.cn?token=tkn_76c76b8928bc4642a6a86cb079dce4e9"
+            - name: ENV_DEFAULT_ENABLED_INPUTS
+              value: "container,ddtrace,profile,self"
+            - name: ENV_LOG
+              value: stdout
+            - name: ENV_GIN_LOG
+              value: stdout
+            - name: ENV_HTTP_LISTEN
+              value: "0.0.0.0:9529"
+
+        # 这里使用 async_profiler 进行 profiling
         - name: datakit-profiler
           image: pubrepo.jiagouyun.com/dataflux/async-profiler:0.1.0
           imagePullPolicy: IfNotPresent
@@ -39,10 +60,12 @@ spec:
               readOnly: true
             - mountPath: /app/datakit-profiler
               name: profile-volume
+            - mountPath: /tmp
+              name: tmp
           workingDir: /app/datakit-profiler
           env:
             - name: DK_AGENT_HOST # datakit listening host
-              value: "192.168.209.128"
+              value: "127.0.0.1"
             - name: DK_AGENT_PORT # datakit listening port
               value: "9529"
             - name: DK_PROFILE_VERSION # user's app version
@@ -64,6 +87,8 @@ spec:
       restartPolicy: Always
       volumes:
         - name: profile-volume
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}
         - name: timezone
           hostPath:
