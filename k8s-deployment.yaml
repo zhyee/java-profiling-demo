@@ -16,23 +16,47 @@ spec:
         app: movies-java
     spec:
       shareProcessNamespace: true
+      #      securityContext:
+      #        sysctls:
+      #          - name: kernel.perf_event_paranoid
+      #            value: "1"
+      #          - name: kernel.kptr_restrict
+      #            value: "0"
       containers:
         - name: movies-java
-          image: zhangyicloud/movies:0.3.0-java
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 8080
+          image: zhangyicloud/movies-java:latest
+          imagePullPolicy: Always
           volumeMounts:
             - mountPath: /app/datakit-profiler
               name: profile-volume
+
         - name: datakit-profiler
-          image: zhangyicloud/async-profiler:0.3.0
+          image: pubrepo.jiagouyun.com/dataflux/async-profiler:0.1.0
           imagePullPolicy: IfNotPresent
           volumeMounts:
+            - mountPath: /etc/localtime  # Synchronize Container Timezone with host
+              name: timezone
+              readOnly: true
             - mountPath: /app/datakit-profiler
               name: profile-volume
           workingDir: /app/datakit-profiler
-          command: [ "sh", "-c", "mv -f /app/async-profiler/* /app/datakit-profiler/;sleep infinity" ]
+          env:
+            - name: DK_AGENT_HOST # datakit listening host
+              value: "192.168.209.128"
+            - name: DK_AGENT_PORT # datakit listening port
+              value: "9529"
+            - name: DK_PROFILE_VERSION # user's app version
+              value: "1.2.333"
+            - name: DK_PROFILE_ENV # user's app deployment env
+              value: "prod"
+            - name: DK_PROFILE_DURATION # profiling duration every time
+              value: "240"
+            - name: DK_PROFILE_SCHEDULE # profiling schedule plan
+              value: "*/20 * * * *"
+          command:
+            - bash
+            - "-c"
+            - "mv -f /app/async-profiler/* /app/datakit-profiler/; ./profiling.sh --add-crontab; cron -f"
           securityContext:
             capabilities:
               add:
@@ -41,3 +65,7 @@ spec:
       volumes:
         - name: profile-volume
           emptyDir: {}
+        - name: timezone
+          hostPath:
+            path: /etc/localtime
+            type: FileOrCreate
