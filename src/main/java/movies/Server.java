@@ -70,7 +70,7 @@ class FileIO implements Runnable{
 
 	@Trace(operationName = "createFile", resourceName = "FileIO")
 	public static File createFile() throws IOException {
-		return File.createTempFile("java_tmp", ".tmp", new File("/Users/zy"));
+		return File.createTempFile("java_tmp", ".tmp", new File("./"));
 	}
 
 
