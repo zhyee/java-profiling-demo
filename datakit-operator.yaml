@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movies-java
+  labels:
+    app: movies-java
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: movies-java
+  template:
+    metadata:
+      name: movies-java
+      labels:
+        app: movies-java
+      annotations:
+        admission.datakit/java-profiler.version: "latest"
+    spec:
+      containers:
+        - name: movies-java
+          image: zhangyicloud/movies-java:latest
+          imagePullPolicy: Always
+          env:
+            - name: JAVA_OPTS
+              value: ""
+
+      restartPolicy: Always

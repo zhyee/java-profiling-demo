@@ -40,7 +40,7 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: ENV_DATAWAY
-              value: "https://openway.guance.com?token=tkn_f5b2989ba6ab44bc988cf7e2aa4a6de3"
+              value: "https://openway.guance.com?token=tkn_2af4b19d7f5a489fa81f0fff7e63b588"
             - name: ENV_DEFAULT_ENABLED_INPUTS
               value: "container,ddtrace,profile,self"
             - name: ENV_LOG
@@ -77,13 +77,12 @@ spec:
             - name: DK_PROFILE_SCHEDULE # profiling schedule plan
               value: "*/20 * * * *"
           command:
-            - bash
-            - "-c"
-            - "mv -f /app/async-profiler/* /app/datakit-profiler/; ./profiling.sh --add-crontab; cron -f"
+            - "./cmd.sh"
           securityContext:
             capabilities:
               add:
                 - SYS_PTRACE
+                - SYS_ADMIN
       restartPolicy: Always
       volumes:
         - name: profile-volume
