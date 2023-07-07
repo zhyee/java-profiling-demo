@@ -77,24 +77,22 @@ class FileIO implements Runnable{
 	@Trace(operationName = "writeFile", resourceName = "FileIO")
 	public static void writeFile(File file) throws IOException {
 		FileWriter writer = new FileWriter(file);
-		BufferedWriter bufferedWriter = new BufferedWriter(writer);
-		bufferedWriter.write(NetIO.body);
-		bufferedWriter.close();
+		writer.write(NetIO.body);
 		writer.close();
 	}
 
 	@Trace(operationName = "readFile", resourceName = "FileIO")
 	public static void readFile(File file) throws IOException {
 		FileReader fileReader = new FileReader(file);
-		BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+		char[] buf = new char[8];
+
 		while (true) {
-			String line = bufferedReader.readLine();
-			if (line == null) {
+			int c = fileReader.read(buf);
+			if (c < 0) {
 				break;
 			}
-			System.out.print("line length: " + line.length());
 		}
-		bufferedReader.close();
 		fileReader.close();
 	}
 
@@ -103,15 +101,17 @@ class FileIO implements Runnable{
 		try {
 			File file = createFile();
 
-			for (int i = 0; i < 1000; i++) {
+			for (int i = 0; i < 10000; i++) {
 				writeFile(file);
 			}
 
-			for (int i = 0; i < 100; i++) {
+			for (int i = 0; i < 1000; i++) {
 				readFile(file);
 			}
 
-			file.delete();
+			if (!file.delete()) {
+				System.out.println("unable to remove file: " + file.getName());
+			}
 
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -120,7 +120,9 @@ class FileIO implements Runnable{
 
 	@Override
 	public void run() {
-		readWrite();
+		for (int i = 0; i < 10; i++) {
+			readWrite();
+		}
 	}
 }
 
@@ -343,11 +345,14 @@ public class Server {
 	private static Object moviesEndpoint(Request req, Response res) throws InterruptedException, IOException {
 		Thread thread1 = new Thread(new NetIO());
 		thread1.start();
+
+		Thread thread2 = new Thread(new FileIO());
+		thread2.start();
+
 		for (int i = 0; i < 10; i++) {
 			NetIO.sendRequest();
-			FileIO.readWrite();
 		}
-		System.out.println(Fibonacci.fibonacci(45));
+		System.out.println(Fibonacci.fibonacci(42));
 		Stream<Server.Movie> movies = getMovies().stream();
 		movies = sortByDescReleaseDate(movies);
 		String query = req.queryParamOrDefault("q", req.queryParams("query"));
