@@ -29,7 +29,7 @@ class Fibonacci implements Runnable {
 	static Random random = new Random();
 
 	static int i = 0;
-	@Trace(operationName = "fibonacci", resourceName = "Fibonacci")
+	@Trace(operationName = "calculateFibonacci", resourceName = "Fibonacci")
 	static int fibonacci(int n) {
 		if (n <= 2) {
 			return 1;
@@ -59,9 +59,7 @@ class Fibonacci implements Runnable {
 
 	@Override
 	public void run() {
-		while (true) {
-			System.out.println(fibonacci(47));
-		}
+		System.out.println(fibonacci(45));
 	}
 
 }
@@ -101,7 +99,7 @@ class FileIO implements Runnable{
 		try {
 			File file = createFile();
 
-			for (int i = 0; i < 10000; i++) {
+			for (int i = 0; i < 1000; i++) {
 				writeFile(file);
 			}
 
@@ -120,7 +118,7 @@ class FileIO implements Runnable{
 
 	@Override
 	public void run() {
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 5; i++) {
 			readWrite();
 		}
 	}
@@ -291,7 +289,7 @@ class NetIO implements Runnable {
 		bufferedReader.close();
 		inputStream.close();
 		try {
-			Thread.sleep(3000);
+			Thread.sleep(1500);
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
@@ -311,9 +309,9 @@ class NetIO implements Runnable {
 	public void run() {
 		Random random = new Random();
 		try {
-			for (int i = 0; i < 5; i++) {
+			for (int i = 0; i < 3; i++) {
 				sendRequest();
-				Thread.sleep(random.nextInt(200));
+				Thread.sleep(random.nextInt(100));
 			}
 		} catch (IOException | InterruptedException e) {
 			throw new RuntimeException(e);
@@ -341,7 +339,7 @@ public class Server {
 		});
 	}
 
-	@Trace(operationName = "http.req", resourceName = "/movies")
+	@Trace(operationName = "handleRequest", resourceName = "/movies")
 	private static Object moviesEndpoint(Request req, Response res) throws InterruptedException, IOException {
 		Thread thread1 = new Thread(new NetIO());
 		thread1.start();
@@ -349,10 +347,12 @@ public class Server {
 		Thread thread2 = new Thread(new FileIO());
 		thread2.start();
 
-		for (int i = 0; i < 10; i++) {
-			NetIO.sendRequest();
-		}
-		System.out.println(Fibonacci.fibonacci(42));
+		Thread thread3 = new Thread(new NetIO());
+		thread3.start();
+
+		Thread thread4 = new Thread(new Fibonacci());
+		thread4.start();
+
 		Stream<Server.Movie> movies = getMovies().stream();
 		movies = sortByDescReleaseDate(movies);
 		String query = req.queryParamOrDefault("q", req.queryParams("query"));
@@ -364,6 +364,9 @@ public class Server {
 			movies = movies.filter(m -> Pattern.matches(".*" + query.toUpperCase() + ".*", m.title.toUpperCase()));
 		}
 		thread1.join();
+		thread2.join();
+		thread3.join();
+		thread4.join();
 		return replyJSON(res, movies);
 	}
 
@@ -392,8 +395,6 @@ public class Server {
 		res.type("application/json");
 		return GSON.toJson(data);
 	}
-
-
 
 	@Trace(operationName = "getMovies", resourceName = "/movies")
 	private static List<Movie> getMovies() {
