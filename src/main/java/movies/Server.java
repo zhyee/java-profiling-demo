@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import datadog.trace.api.Trace;
+import jdk.dynalink.Operation;
 import spark.Request;
 import spark.Response;
 
@@ -26,10 +27,16 @@ import static spark.Spark.*;
 
 class Fibonacci implements Runnable {
 
+
+	@Trace(operationName = "newFibonacci", resourceName = "Fibonacci")
+	static Fibonacci getInstance() {
+		return new Fibonacci();
+	}
+
 	static Random random = new Random();
 
 	static int i = 0;
-	@Trace(operationName = "calculateFibonacci", resourceName = "Fibonacci")
+	@Trace(operationName = "fibonacci", resourceName = "Fibonacci")
 	static int fibonacci(int n) {
 		if (n <= 2) {
 			return 1;
@@ -42,7 +49,7 @@ class Fibonacci implements Runnable {
 			return 1;
 		}
 
-		if (random.nextInt(100000000) == 0) {
+		if (random.nextInt(100000000) <= 1) {
 			return fibonacci1(n-1) + fibonacci(n-2);
 		} else {
 			return fibonacci1(n-1) + fibonacci1(n-2);
@@ -58,6 +65,7 @@ class Fibonacci implements Runnable {
 	}
 
 	@Override
+	@Trace(operationName = "run", resourceName = "Fibonacci")
 	public void run() {
 		System.out.println(fibonacci(45));
 	}
@@ -270,6 +278,12 @@ class NetIO implements Runnable {
 			"九派新闻从多名银行从业人员处了解到，取钱可以拿身份证代办，但像密码重置、银行卡挂失等业务，是需要本人办理。在老人不方便的情况下，可以向银行网点申请特事特办，让工作人员进行上门服务。\n" +
 			"“银行工作人员为客户申请特事特办需要一定的审批时间，一般两到三天。到达客户指定上门地点后，工作人员会向思路还比较清晰的老人询问，是否确定要办这项业务、委托此人办理业务等问题，然后签订一份文件，再由代办人拿着两人的身份证来网点办理。”他说。\n" +
 			"对于银行和储户之间的沟通问题，他表示自己所在支行有很多客户是老人，这类情况时有发生，上门服务的频次较高。";
+
+	@Trace(operationName = "newNetIO", resourceName = "NetIO")
+	static NetIO getInstance() {
+		return new NetIO();
+	}
+
 	@Trace(operationName = "sendRequest", resourceName = "NetIO")
 	public static synchronized void sendRequest() throws IOException {
 		URL url = new URL("https://baijiahao.baidu.com/s?id=1766280179246190391&wfr=spider&for=pc");
@@ -289,7 +303,7 @@ class NetIO implements Runnable {
 		bufferedReader.close();
 		inputStream.close();
 		try {
-			Thread.sleep(1500);
+			Thread.sleep(500);
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
@@ -307,13 +321,11 @@ class NetIO implements Runnable {
 	@Override
 	@Trace(operationName = "run", resourceName = "NetIO")
 	public void run() {
-		Random random = new Random();
 		try {
 			for (int i = 0; i < 3; i++) {
 				sendRequest();
-				Thread.sleep(random.nextInt(100));
 			}
-		} catch (IOException | InterruptedException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -341,17 +353,18 @@ public class Server {
 
 	@Trace(operationName = "handleRequest", resourceName = "/movies")
 	private static Object moviesEndpoint(Request req, Response res) throws InterruptedException, IOException {
-		Thread thread1 = new Thread(new NetIO());
+		Thread thread1 = new Thread(NetIO.getInstance());
 		thread1.start();
 
-		Thread thread2 = new Thread(new FileIO());
-		thread2.start();
+//		Thread thread2 = new Thread(new FileIO());
+//		thread2.start();
 
-		Thread thread3 = new Thread(new NetIO());
-		thread3.start();
+//		Thread thread3 = new Thread(new NetIO());
+//		thread3.start();
 
-		Thread thread4 = new Thread(new Fibonacci());
-		thread4.start();
+		NetIO.getInstance().run();
+
+		Fibonacci.getInstance().run();
 
 		Stream<Server.Movie> movies = getMovies().stream();
 		movies = sortByDescReleaseDate(movies);
@@ -363,11 +376,12 @@ public class Server {
 			//   movies = movies.filter(m -> p.matcher(m.title).find());
 			movies = movies.filter(m -> Pattern.matches(".*" + query.toUpperCase() + ".*", m.title.toUpperCase()));
 		}
+//		thread2.join();
+//		thread3.join();
+//		thread4.join();
+		Object object = replyJSON(res, movies);
 		thread1.join();
-		thread2.join();
-		thread3.join();
-		thread4.join();
-		return replyJSON(res, movies);
+		return object;
 	}
 
 	@Trace(operationName = "sortByDescReleaseDate", resourceName = "/movies")
