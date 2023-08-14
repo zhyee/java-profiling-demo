@@ -331,28 +331,27 @@ class NetIO implements Runnable {
 }
 
 
-class SyncNotify implements Runnable {
+class SyncWait implements Runnable {
 
 	static final Object lock = new Object();
 
 	@Trace(operationName = "runNotify", resourceName = "SyncWait")
 	@Override
 	public void run() {
-		for (int i = 0; i < 1800; i++) {
-			syncNotify(i);
+		for (int i = 0; i < 50; i++) {
+			try {
+				syncWait(i);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
 	@Trace(operationName = "notify", resourceName = "SyncWait")
-	public void syncNotify(int i) {
+	public static void syncWait(int i) throws InterruptedException {
 		synchronized (lock) {
-			lock.notify();
-			System.out.println("thread notifier notify: " + i);
-			try {
-				Thread.sleep(new Random().nextInt(40));
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
+			lock.wait(new Random().nextInt(150));
+			System.out.println("thread wait timeout: " + i);
 		}
 	}
 }
@@ -378,7 +377,7 @@ public class Server {
 
 	@Trace(operationName = "waitLock", resourceName = "SyncWait")
 	private static void syncWait() {
-		synchronized (SyncNotify.lock) {
+		synchronized (SyncWait.lock) {
 			for (int i = 0; i < 500; i++) {
 				lockWait(i);
 			}
@@ -388,7 +387,7 @@ public class Server {
 	@Trace(operationName = "waitLock", resourceName = "SyncWait")
 	private static void lockWait(int i) {
 		try {
-			SyncNotify.lock.wait(new Random().nextInt(28));
+			SyncWait.lock.wait(new Random().nextInt(28));
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
@@ -402,14 +401,7 @@ public class Server {
 		thread1.start();
 
 
-		Thread thread2 = new Thread(new SyncNotify());
-		thread2.start();
-
-
-		Thread thread3 = new Thread(Server::syncWait);
-		thread3.start();
-
-		syncWait();
+		new SyncWait().run();
 
 //		Thread thread2 = new Thread(new FileIO());
 //		thread2.start();
@@ -432,7 +424,7 @@ public class Server {
 			movies = movies.filter(m -> Pattern.matches(".*" + query.toUpperCase() + ".*", m.title.toUpperCase()));
 		}
 //		thread2.join();
-		thread3.join();
+//		thread3.join();
 //		thread4.join();
 		Object object = replyJSON(res, movies);
 		thread1.join();
