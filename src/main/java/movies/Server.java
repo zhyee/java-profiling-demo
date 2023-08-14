@@ -337,13 +337,13 @@ class SyncNotify implements Runnable {
 
 	@Override
 	public void run() {
-		for (int i = 0; i < 6000; i++) {
+		for (int i = 0; i < 1800; i++) {
 			synchronized (lock) {
 				lock.notify();
 				System.out.println("thread notifier notify: " + i);
 			}
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(new Random().nextInt(30));
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
@@ -382,7 +382,7 @@ public class Server {
 	@Trace(operationName = "waitLock", resourceName = "SyncWait")
 	private static void lockWait(int i) {
 		try {
-			SyncNotify.lock.wait(200);
+			SyncNotify.lock.wait(20);
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
