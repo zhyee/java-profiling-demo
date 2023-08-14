@@ -331,6 +331,26 @@ class NetIO implements Runnable {
 }
 
 
+class SyncNotify implements Runnable {
+
+	static final Object lock = new Object();
+
+	@Override
+	public void run() {
+		for (int i = 0; i < 6000; i++) {
+			synchronized (lock) {
+				lock.notify();
+				System.out.println("thread notifier notify: " + i);
+			}
+			try {
+				Thread.sleep(1);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+}
+
 
 public class Server {
 	private static final Gson GSON;
@@ -354,6 +374,26 @@ public class Server {
 	private static Object moviesEndpoint(Request req, Response res) throws InterruptedException, IOException {
 		Thread thread1 = new Thread(NetIO.getInstance());
 		thread1.start();
+
+
+		Thread thread2 = new Thread(new SyncNotify());
+		thread2.start();
+
+
+		Thread thread3 = new Thread(() -> {
+			synchronized (SyncNotify.lock) {
+				for (int i = 0; i < 5000; i++) {
+					try {
+						SyncNotify.lock.wait();
+					} catch (InterruptedException e) {
+						throw new RuntimeException(e);
+					}
+
+					System.out.println("wait thread print: " + i);
+				}
+			}
+		});
+		thread3.start();
 
 //		Thread thread2 = new Thread(new FileIO());
 //		thread2.start();
@@ -380,6 +420,7 @@ public class Server {
 //		thread4.join();
 		Object object = replyJSON(res, movies);
 		thread1.join();
+		thread3.join();
 		return object;
 	}
 
