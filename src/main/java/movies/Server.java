@@ -343,7 +343,7 @@ class SyncNotify implements Runnable {
 				System.out.println("thread notifier notify: " + i);
 			}
 			try {
-				Thread.sleep(1);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
@@ -382,7 +382,7 @@ public class Server {
 	@Trace(operationName = "waitLock", resourceName = "SyncWait")
 	private static void lockWait(int i) {
 		try {
-			SyncNotify.lock.wait();
+			SyncNotify.lock.wait(200);
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
