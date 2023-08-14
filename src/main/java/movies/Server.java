@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import datadog.trace.api.Trace;
-import jdk.dynalink.Operation;
 import spark.Request;
 import spark.Response;
 
@@ -303,7 +302,7 @@ class NetIO implements Runnable {
 		bufferedReader.close();
 		inputStream.close();
 		try {
-			Thread.sleep(500);
+			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
@@ -322,7 +321,7 @@ class NetIO implements Runnable {
 	@Trace(operationName = "run", resourceName = "NetIO")
 	public void run() {
 		try {
-			for (int i = 0; i < 3; i++) {
+			for (int i = 0; i < 10; i++) {
 				sendRequest();
 			}
 		} catch (IOException e) {
