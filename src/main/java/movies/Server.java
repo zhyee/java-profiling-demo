@@ -370,6 +370,26 @@ public class Server {
 		});
 	}
 
+	@Trace(operationName = "waitLock", resourceName = "SyncWait")
+	private static void syncWait() {
+		synchronized (SyncNotify.lock) {
+			for (int i = 0; i < 2000; i++) {
+				lockWait(i);
+			}
+		}
+	}
+
+	@Trace(operationName = "waitLock", resourceName = "SyncWait")
+	private static void lockWait(int i) {
+		try {
+			SyncNotify.lock.wait();
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+
+		System.out.println("wait thread print: " + i);
+	}
+
 	@Trace(operationName = "handleRequest", resourceName = "/movies")
 	private static Object moviesEndpoint(Request req, Response res) throws InterruptedException, IOException {
 		Thread thread1 = new Thread(NetIO.getInstance());
@@ -380,20 +400,7 @@ public class Server {
 		thread2.start();
 
 
-		Thread thread3 = new Thread(() -> {
-			synchronized (SyncNotify.lock) {
-				for (int i = 0; i < 5000; i++) {
-					try {
-						SyncNotify.lock.wait();
-					} catch (InterruptedException e) {
-						throw new RuntimeException(e);
-					}
-
-					System.out.println("wait thread print: " + i);
-				}
-			}
-		});
-		thread3.start();
+		syncWait();
 
 //		Thread thread2 = new Thread(new FileIO());
 //		thread2.start();
@@ -420,7 +427,6 @@ public class Server {
 //		thread4.join();
 		Object object = replyJSON(res, movies);
 		thread1.join();
-		thread3.join();
 		return object;
 	}
 
