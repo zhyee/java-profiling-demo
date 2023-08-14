@@ -335,15 +335,21 @@ class SyncNotify implements Runnable {
 
 	static final Object lock = new Object();
 
+	@Trace(operationName = "runNotify", resourceName = "SyncWait")
 	@Override
 	public void run() {
 		for (int i = 0; i < 1800; i++) {
-			synchronized (lock) {
-				lock.notify();
-				System.out.println("thread notifier notify: " + i);
-			}
+			syncNotify(i);
+		}
+	}
+
+	@Trace(operationName = "notify", resourceName = "SyncWait")
+	public void syncNotify(int i) {
+		synchronized (lock) {
+			lock.notify();
+			System.out.println("thread notifier notify: " + i);
 			try {
-				Thread.sleep(new Random().nextInt(30));
+				Thread.sleep(new Random().nextInt(40));
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
@@ -373,7 +379,7 @@ public class Server {
 	@Trace(operationName = "waitLock", resourceName = "SyncWait")
 	private static void syncWait() {
 		synchronized (SyncNotify.lock) {
-			for (int i = 0; i < 2000; i++) {
+			for (int i = 0; i < 500; i++) {
 				lockWait(i);
 			}
 		}
@@ -382,7 +388,7 @@ public class Server {
 	@Trace(operationName = "waitLock", resourceName = "SyncWait")
 	private static void lockWait(int i) {
 		try {
-			SyncNotify.lock.wait(20);
+			SyncNotify.lock.wait(new Random().nextInt(28));
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
@@ -399,6 +405,9 @@ public class Server {
 		Thread thread2 = new Thread(new SyncNotify());
 		thread2.start();
 
+
+		Thread thread3 = new Thread(Server::syncWait);
+		thread3.start();
 
 		syncWait();
 
@@ -423,7 +432,7 @@ public class Server {
 			movies = movies.filter(m -> Pattern.matches(".*" + query.toUpperCase() + ".*", m.title.toUpperCase()));
 		}
 //		thread2.join();
-//		thread3.join();
+		thread3.join();
 //		thread4.join();
 		Object object = replyJSON(res, movies);
 		thread1.join();
