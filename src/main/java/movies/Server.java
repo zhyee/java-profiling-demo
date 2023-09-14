@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import datadog.trace.api.Trace;
+import io.github.guancecloud.Context;
 import spark.Request;
 import spark.Response;
 
@@ -320,6 +321,10 @@ class NetIO implements Runnable {
 	@Override
 	@Trace(operationName = "run", resourceName = "NetIO")
 	public void run() {
+
+		Context.getInstance().recordTraceRoot(11111111111L, "/netio", 1024);
+		Context.getInstance().setContext(22222222222L, 11111111111L);
+
 		try {
 			for (int i = 0; i < 10; i++) {
 				sendRequest();
@@ -351,6 +356,7 @@ class SyncWait implements Runnable {
 	public static void syncWait(int i) throws InterruptedException {
 		synchronized (lock) {
 			lock.wait(new Random().nextInt(150));
+			Fibonacci.fibonacci(30);
 			System.out.println("thread wait timeout: " + i);
 		}
 	}
@@ -375,28 +381,12 @@ public class Server {
 		});
 	}
 
-	@Trace(operationName = "waitLock", resourceName = "SyncWait")
-	private static void syncWait() {
-		synchronized (SyncWait.lock) {
-			for (int i = 0; i < 500; i++) {
-				lockWait(i);
-			}
-		}
-	}
-
-	@Trace(operationName = "waitLock", resourceName = "SyncWait")
-	private static void lockWait(int i) {
-		try {
-			SyncWait.lock.wait(new Random().nextInt(28));
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
-
-		System.out.println("wait thread print: " + i);
-	}
-
 	@Trace(operationName = "handleRequest", resourceName = "/movies")
 	private static Object moviesEndpoint(Request req, Response res) throws InterruptedException, IOException {
+
+		Context.getInstance().recordTraceRoot(333333333333L, "/movies", 1024);
+		Context.getInstance().setContext(4444444444444L, 333333333333L);
+
 		Thread thread1 = new Thread(NetIO.getInstance());
 		thread1.start();
 
